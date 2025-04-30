@@ -1,0 +1,6 @@
+# 基本依赖
+pytest>=7.0.0
+black>=22.0.0
+flake8>=4.0.0
+playwright>=1.40.0
+pandas>=2.0.0 
