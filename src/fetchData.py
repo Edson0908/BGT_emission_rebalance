@@ -21,6 +21,12 @@ def fetch_data():
             print("等待表格加载...")
             page.wait_for_selector("table", timeout=30000)
             
+            # 获取表头
+            print("获取表头...")
+            headers = page.query_selector_all("table thead th")
+            header_texts = [header.inner_text().strip() for header in headers]
+            print("实际表头:", header_texts)
+            
             # 等待一段时间确保数据完全加载
             time.sleep(5)
             
@@ -40,9 +46,9 @@ def fetch_data():
             # 创建 DataFrame
             df = pd.DataFrame(data, columns=[
                 "Star", "Rank", "Name", "Incentivizer", "USD/BGT", "Efficiency", 
-                "APR", "TVL", "Incentives", "Depletion Time", "Daily Rate", 
-                "Rate/BGT", "Protocol", "BGT Capture", "Annualized BGT",
-                "Column16", "Column17", "Column18", "Column19", "Column20", "Column21"
+                "APR_1", "APR_2", "APR_3", "eAPY", "APY", "APR_4", "cAPR", "TVL", 
+                "Incentives", "Depletion Time", "Daily Rate", "Rate/BGT", 
+                "Protocol", "BGT Capture", "Annualized BGT"
             ])
 
             print("\n数据预览:")
