@@ -9,12 +9,3 @@
 ```bash
 pip install -r requirements.txt
 ```
-
-## 使用方法
-
-待补充
-
-## 开发环境
-
-- Python 3.x
-- 依赖包见 requirements.txt
