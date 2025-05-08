@@ -1,5 +1,6 @@
 import fetchData
 import json
+import contractInteraction
 
 # 读取配置文件
 with open("config/config.json", "r") as f:
@@ -44,9 +45,33 @@ def main():
     validator_data = fetchData.get_validator_data()
     # 获取所有Vault 数据
     all_vaults_data = fetchData.get_all_vaults()
-    
-    selected_vaults = select_vaults(all_vaults_data)  
+
+    selected_vaults = select_vaults(all_vaults_data) 
+    index = 0
+    for vault in selected_vaults:
+        vault["weights"] = config["params"]["vaults_allocation"][index]
+        index += 1
     print(json.dumps(selected_vaults, indent=4))
+    
+    # 获取当前区块
+    current_block = contractInteraction.get_current_block()
+    print(f"当前区块: {current_block}")
+    # 计算开始区块
+    start_block = current_block + config["params"]["delay_blocks"] + 10
+    # 获取验证者公钥
+    pubkey = config["validator_info"]["pubkey"]
+    
+    # 调用合约函数排队新的奖励分配
+    print(f"当前区块: {current_block}, 开始区块: {start_block}")
+    print(f"正在排队新的BGT分配...")
+    tx_hash = contractInteraction.queue_new_reward_allocation(pubkey, start_block, selected_vaults)
+    
+    if tx_hash:
+        print(f"BGT分配成功排队，将在区块 {start_block} 开始生效")
+    else:
+        print("BGT分配排队失败")
+
+
 
 if __name__ == "__main__":
     main()
