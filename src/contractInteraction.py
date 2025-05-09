@@ -3,9 +3,11 @@ import dotenv
 import os
 from queryGraph import *
 from web3 import Web3
+from custom_logger import get_logger
 
 dotenv.load_dotenv(override=True)
 web3 = Web3(Web3.HTTPProvider(os.getenv("BERA_RPC_URL")))
+logger = get_logger()
 
 # 读取配置文件
 with open("config/config.json", "r") as f:
@@ -38,14 +40,13 @@ def get_active_reward_allocation(pubkey):
             json.dump(active_reward_allocation, f, ensure_ascii=False, indent=2)
         return active_reward_allocation
     except Exception as e:
-        print(f"❌ 调用合约失败：{str(e)}")
+        logger.debug(f"❌ 调用合约失败：{str(e)}")
         return None
 
 def get_queued_reward_allocation(pubkey):
     # 调用合约函数
     try:
         result = contract.functions.getQueuedRewardAllocation(pubkey).call()
-        print(result)
         queued_reward_allocation = {
             "startBlock": result[0],
             "weights": [
@@ -56,11 +57,10 @@ def get_queued_reward_allocation(pubkey):
                 for weight in result[1]
             ]
         }
-        with open("data/queued_reward_allocation.json", "w", encoding="utf-8") as f:
-            json.dump(queued_reward_allocation, f, ensure_ascii=False, indent=2)
+
         return queued_reward_allocation
     except Exception as e:
-        print(f"❌ 调用合约失败：{str(e)}")
+        logger.debug(f"❌ 调用合约失败：{str(e)}")
         return None
 
 def queue_new_reward_allocation(pubkey, start_block, weights):
@@ -81,8 +81,6 @@ def queue_new_reward_allocation(pubkey, start_block, weights):
             for vault in weights
         ]
         
-        # 转换合约地址为checksum格式
-        checksum_contract_address = web3.to_checksum_address(contract_address)
         
         # 构建交易
         tx = contract.functions.queueNewRewardAllocation(
@@ -100,11 +98,14 @@ def queue_new_reward_allocation(pubkey, start_block, weights):
         signed_tx = web3.eth.account.sign_transaction(tx, private_key)
         
         # 发送交易
-        tx_hash = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        try:
+            tx_hash = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        except AttributeError:
+            tx_hash = web3.eth.send_raw_transaction(signed_tx.raw_transaction)
         
         # 等待交易被确认
         receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
-        print(f"✅ 新的奖励分配已排队，交易哈希: {tx_hash.hex()}")
+        logger.debug(f"✅ 新的奖励分配已排队，交易哈希: {tx_hash.hex()}")
         
         # 保存交易信息
         tx_info = {
@@ -119,12 +120,10 @@ def queue_new_reward_allocation(pubkey, start_block, weights):
                 for vault in weights
             ]
         }
-        with open("data/queued_tx_info.json", "w", encoding="utf-8") as f:
-            json.dump(tx_info, f, ensure_ascii=False, indent=2)
             
         return tx_hash
     except Exception as e:
-        print(f"❌ 调用合约失败：{str(e)}")
+        logger.debug(f"❌ 调用合约失败：{str(e)}")
         return None
 
 

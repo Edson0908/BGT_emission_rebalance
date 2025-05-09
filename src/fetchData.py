@@ -5,10 +5,10 @@ import dotenv
 import os
 from queryGraph import *
 from web3 import Web3
-
+from custom_logger import get_logger
 dotenv.load_dotenv(override=True)
 web3 = Web3(Web3.HTTPProvider(os.getenv("BERA_RPC_URL")))
-
+logger = get_logger()
 # 读取配置文件
 with open("config/config.json", "r") as f:
     config = json.load(f)
@@ -40,7 +40,7 @@ def get_active_reward_allocation(pubkey):
             json.dump(active_reward_allocation, f, ensure_ascii=False, indent=2)
         return active_reward_allocation
     except Exception as e:
-        print(f"❌ 调用合约失败：{str(e)}")
+        logger.debug(f"❌ 调用合约失败：{str(e)}")
         return None
 
 
@@ -76,13 +76,13 @@ def get_validator_data(pubkey=None):
 
         response = requests.post(url, json=payload, headers=headers)
         if response.status_code != 200:
-            print(f"❌ 请求失败，状态码：{response.status_code}")
+            logger.debug(f"❌ 请求失败，状态码：{response.status_code}")
             break
 
         data = response.json()
         validators = data["data"]["validators"]["validators"]
         total = data["data"]["validators"]["pagination"]["totalCount"]
-        print(f"✅ 已获取第 {skip // page_size + 1} 页，共 {len(validators)} 条")
+        logger.debug(f"✅ 已获取第 {skip // page_size + 1} 页，共 {len(validators)} 条")
 
         all_validators.extend(validators)
         skip += page_size
@@ -94,16 +94,21 @@ def get_validator_data(pubkey=None):
     validators_by_pubkey = next((v for v in all_validators if v["pubkey"].lower() == pubkey.lower()), None)
 
     bgt_per_block = 0
+    current_vaults = []
     for valut in validators_by_pubkey["rewardAllocationWeights"]:
         bgt_per_block += float(valut["receivingVault"]["dynamicData"]["bgtCapturePerBlock"])
+        current_vaults.append({
+            "id": valut["receivingVault"]["id"],
+            "weights": valut["percentageNumerator"]
+        })
     
     validators_by_pubkey["bgtPerBlock"] = bgt_per_block
     validator_name = validators_by_pubkey["metadata"]["name"]
     with open("data/snz_validator_data.json", "w", encoding="utf-8") as f:
         json.dump(validators_by_pubkey, f, ensure_ascii=False, indent=2)
-    print(f"✅ 已保存 {validator_name} 的 Validator 数据")
+    logger.debug(f"✅ 已保存 {validator_name} 的 Validator 数据")
 
-    return validators_by_pubkey
+    return current_vaults
 
 def get_all_vaults():
 
@@ -143,7 +148,7 @@ def get_all_vaults():
         vaults = data["data"]["polGetRewardVaults"]["vaults"]
         total = data["data"]["polGetRewardVaults"]["pagination"]["totalCount"]
 
-        print(f"✅ 已获取第 {skip // page_size + 1} 页，共 {len(vaults)} 条")
+        logger.debug(f"✅ 已获取第 {skip // page_size + 1} 页，共 {len(vaults)} 条")
 
         all_vaults.extend(vaults)
         skip += page_size
@@ -161,7 +166,7 @@ def get_all_vaults():
         calculate_remaining_time(vault)
         total_incentives_rate += float(vault["dynamicData"]["activeIncentivesRateUsd"])
     avg_incentives_rate = total_incentives_rate / len(all_vaults)
-    print(f"✅ 平均激励率: {avg_incentives_rate}")
+    logger.debug(f"✅ 平均激励率: {avg_incentives_rate}")
     # 保存为 JSON 文件
 
     data = {
@@ -203,7 +208,7 @@ def calculate_remaining_time(vault):
 
  
     vault["dynamicData"]["remainingHours"] = remaining_hour
-    print(f"✅ 已计算 {vault['metadata']['name']} 的剩余时间: {remaining_hour} 小时")
+    logger.debug(f"✅ 已计算 {vault['metadata']['name']} 的剩余时间: {remaining_hour} 小时")
     
     return None
 

@@ -1,10 +1,13 @@
 import fetchData
 import json
 import contractInteraction
+from custom_logger import get_logger
 
 # 读取配置文件
 with open("config/config.json", "r") as f:
     config = json.load(f)
+
+logger = get_logger()
 
 def select_vaults(all_vaults_data):
 
@@ -39,10 +42,30 @@ def select_vaults(all_vaults_data):
     return selected_vaults
                 
 
+def need_new_allocation(selected_vaults, current_vaults):
+    number = 0
+    for target_vault in selected_vaults:
+        for current_vault in current_vaults:
+            if target_vault["id"] == current_vault["id"] and target_vault["weights"] == current_vault["weights"]:
+                number += 1
+                break
+    if number == len(selected_vaults):
+        return False
+    else:
+        return True
+
 def main():
-    
+
+    # 获取验证者公钥
+    pubkey = config["validator_info"]["pubkey"]
+    queued_reward_allocation = contractInteraction.get_queued_reward_allocation(pubkey)
+    if queued_reward_allocation["startBlock"] != 0 :
+        logger.debug(f"当前分配已排队: {queued_reward_allocation}")
+        return
+
     # 获取SNZ Validator 数据
-    validator_data = fetchData.get_validator_data()
+    current_vaults = fetchData.get_validator_data()
+    logger.debug(json.dumps(current_vaults, indent=4))
     # 获取所有Vault 数据
     all_vaults_data = fetchData.get_all_vaults()
 
@@ -51,26 +74,30 @@ def main():
     for vault in selected_vaults:
         vault["weights"] = config["params"]["vaults_allocation"][index]
         index += 1
-    print(json.dumps(selected_vaults, indent=4))
-    
-    # 获取当前区块
+    logger.debug(f"目标Vaults: {json.dumps(selected_vaults, indent=4)}")
+
+    logger.debug(f"当前Vaults: {json.dumps(current_vaults, indent=4)}")
+
     current_block = contractInteraction.get_current_block()
-    print(f"当前区块: {current_block}")
+    logger.info(f"当前区块: {current_block}")
+    
+    if not need_new_allocation(selected_vaults, current_vaults):
+        logger.info("不需要新的BGT分配")
+        return
     # 计算开始区块
     start_block = current_block + config["params"]["delay_blocks"] + 10
-    # 获取验证者公钥
-    pubkey = config["validator_info"]["pubkey"]
     
     # 调用合约函数排队新的奖励分配
-    print(f"当前区块: {current_block}, 开始区块: {start_block}")
-    print(f"正在排队新的BGT分配...")
+    logger.debug(f"开始区块: {start_block}")
+    logger.debug(f"正在排队新的BGT分配...")
     tx_hash = contractInteraction.queue_new_reward_allocation(pubkey, start_block, selected_vaults)
     
     if tx_hash:
-        print(f"BGT分配成功排队，将在区块 {start_block} 开始生效")
+        logger.info(f"新BGT分配将在区块 {start_block} 开始生效")
+        for vault in selected_vaults:
+            logger.info(f"Vault: {vault['name']}, 权重: {vault['weights']}, 激励率: {vault['incentivesRate']}, 剩余时间: {vault['remainingHours']}")
     else:
-        print("BGT分配排队失败")
-
+        logger.debug("BGT分配排队失败")
 
 
 if __name__ == "__main__":
