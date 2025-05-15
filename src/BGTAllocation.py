@@ -85,7 +85,7 @@ def main():
         logger.info("不需要新的BGT分配")
         return
     # 计算开始区块
-    start_block = current_block + config["params"]["delay_blocks"] + 10
+    start_block = current_block + config["params"]["delay_blocks"]
     
     # 调用合约函数排队新的奖励分配
     logger.debug(f"开始区块: {start_block}")

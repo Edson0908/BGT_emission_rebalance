@@ -208,7 +208,7 @@ def calculate_remaining_time(vault):
 
  
     vault["dynamicData"]["remainingHours"] = remaining_hour
-    logger.debug(f"✅ 已计算 {vault['metadata']['name']} 的剩余时间: {remaining_hour} 小时")
+    logger.debug(f"✅ 已计算 {vault.get('id')} 的剩余时间: {remaining_hour} 小时")
     
     return None
 

@@ -4,7 +4,7 @@
     "pubkey": "0x96652bba2f2f3b6b4fcfdfe9847f6a5604965d0ebac37c1f0c3774da0866140ab69734feec0eb0761f8e08d809c9e12b"
   },
   "params": {
-    "delay_blocks": 2000,
+    "delay_blocks": 2300,
     "avg_block_time": 2,
     "max_weight_per_vault": 3000,
     "vaults_allocation": [3000, 2000, 2000, 1500, 1500],
@@ -18,6 +18,10 @@
     {
       "id": "0x11fadf69a02340a676b4bd2a27ffd952094fae99",
       "name": "SolvProtocol - SolvBTC | WBTC"
+    },
+    {
+      "id": "0x9a5620309c20b8beca1d59c6def1e73ac6cba45d",
+      "name": "SolvProtocol"
     },
     {
       "id": "0x4551c0e216f59cc081b6610637668b770ffdf843",
