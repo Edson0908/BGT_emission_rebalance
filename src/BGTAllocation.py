@@ -37,7 +37,12 @@ def select_vaults(all_vaults_data):
             if vault_id in whitelisted_ids:
                 continue
             if float(vault["dynamicData"]["remainingHours"]) > min_remaining_hours:
-                selected_vaults.append({"id": vault["id"], "name": vault["metadata"]["name"], "incentivesRate": vault["dynamicData"]["activeIncentivesRateUsd"], "remainingHours": vault["dynamicData"]["remainingHours"]})
+                selected_vaults.append({
+                    "id": vault["id"],
+                    "name": vault["metadata"]["name"] if vault.get("metadata") else vault["id"],
+                    "incentivesRate": vault["dynamicData"]["activeIncentivesRateUsd"],
+                    "remainingHours": vault["dynamicData"]["remainingHours"]
+                })
                 if len(selected_vaults) == len(vaults_allocation):
                     break
 
