@@ -18,6 +18,7 @@ def select_vaults(all_vaults_data):
     avg_incentives_rate = all_vaults_data["avgIncentivesRate"]
     # 读取白名单
     whitelisted_vaults = config["whitelisted_vaults"]
+    whitelisted_ids = {vault["id"] for vault in whitelisted_vaults}
     selected_vaults = []
     for vault in whitelisted_vaults:
         vault_id = vault["id"]
@@ -32,8 +33,16 @@ def select_vaults(all_vaults_data):
 
     if len(selected_vaults) < len(vaults_allocation):
         for vault in all_vaults:
+            vault_id = vault["id"]
+            if vault_id in whitelisted_ids:
+                continue
             if float(vault["dynamicData"]["remainingHours"]) > min_remaining_hours:
-                selected_vaults.append({"id": vault["id"], "name": vault["metadata"]["name"], "incentivesRate": vault["dynamicData"]["activeIncentivesRateUsd"], "remainingHours": vault["dynamicData"]["remainingHours"]})
+                selected_vaults.append({
+                    "id": vault["id"],
+                    "name": vault["metadata"]["name"] if vault.get("metadata") else vault["id"],
+                    "incentivesRate": vault["dynamicData"]["activeIncentivesRateUsd"],
+                    "remainingHours": vault["dynamicData"]["remainingHours"]
+                })
                 if len(selected_vaults) == len(vaults_allocation):
                     break
 
