@@ -10,6 +10,12 @@
     "vaults_allocation": [3000, 2000, 2000, 1500, 1500],
     "min_remaining_hours": 5.5
   },
+  "fixed_vaults": [
+    {
+      "id": "0x5aB58FD0c6e74ae10A74a5FD43E5B6D26e46a18f",
+      "name": "Wasabee - iBERA | WBERA"
+    }
+  ],
   "whitelisted_vaults": [
     {
       "id": "0x3fc5cb0290c82680afe9ef8cdde5468d74c85705",

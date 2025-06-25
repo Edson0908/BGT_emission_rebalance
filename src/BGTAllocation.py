@@ -16,9 +16,22 @@ def select_vaults(all_vaults_data):
 
     all_vaults = all_vaults_data["vaults"]
     avg_incentives_rate = all_vaults_data["avgIncentivesRate"]
-    # 读取白名单
-    whitelisted_vaults = config["whitelisted_vaults"]
+
+    # 读取 fixed_vaults
+    selected_vaults_fixed = []
+    fixed_vaults = config["fixed_vaults"]
+    for vault in fixed_vaults:
+        vault_id = vault["id"]
+        for item in all_vaults:
+            if item["id"] == vault_id:
+                vault["incentivesRate"] = item["dynamicData"]["activeIncentivesRateUsd"]
+                vault["remainingHours"] = item["dynamicData"]["remainingHours"]
+                break
+        selected_vaults_fixed.append(vault)
+
+    # 读取 whitelisted_vaults
     selected_vaults = []
+    whitelisted_vaults = config["whitelisted_vaults"]
     for vault in whitelisted_vaults:
         vault_id = vault["id"]
         for item in all_vaults:
@@ -33,12 +46,22 @@ def select_vaults(all_vaults_data):
     if len(selected_vaults) < len(vaults_allocation):
         for vault in all_vaults:
             if float(vault["dynamicData"]["remainingHours"]) > min_remaining_hours:
-                selected_vaults.append({"id": vault["id"], "name": vault["metadata"]["name"], "incentivesRate": vault["dynamicData"]["activeIncentivesRateUsd"], "remainingHours": vault["dynamicData"]["remainingHours"]})
+                selected_vaults.append({
+                    "id": vault["id"],
+                    "name": vault["metadata"]["name"] if vault.get("metadata") else vault["id"],
+                    "incentivesRate": vault["dynamicData"]["activeIncentivesRateUsd"],
+                    "remainingHours": vault["dynamicData"]["remainingHours"]
+                })
                 if len(selected_vaults) == len(vaults_allocation):
                     break
 
-    selected_vaults = sorted(selected_vaults, key=lambda x: float(x["incentivesRate"]), reverse=True)  
-    selected_vaults = selected_vaults[:len(vaults_allocation)]
+    selected_vaults = sorted(selected_vaults, key=lambda x: float(x["incentivesRate"]), reverse=True) 
+    # 检查 selected_vaults_fixed 是否为空，如果为空则直接返回 selected_vaults
+    if len(selected_vaults_fixed) == 0:
+        selected_vaults = selected_vaults[:len(vaults_allocation)]
+    else:
+        selected_vaults = selected_vaults_fixed + selected_vaults[:(len(vaults_allocation) - len(selected_vaults_fixed))]
+
     return selected_vaults
                 
 
