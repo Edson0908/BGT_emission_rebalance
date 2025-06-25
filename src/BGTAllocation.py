@@ -20,6 +20,7 @@ def select_vaults(all_vaults_data):
     # 读取 fixed_vaults
     selected_vaults_fixed = []
     fixed_vaults = config["fixed_vaults"]
+    fixed_ids = {vault["id"] for vault in fixed_vaults}
     for vault in fixed_vaults:
         vault_id = vault["id"]
         for item in all_vaults:
@@ -32,6 +33,7 @@ def select_vaults(all_vaults_data):
     # 读取 whitelisted_vaults
     selected_vaults = []
     whitelisted_vaults = config["whitelisted_vaults"]
+    whitelisted_ids = {vault["id"] for vault in whitelisted_vaults}
     for vault in whitelisted_vaults:
         vault_id = vault["id"]
         for item in all_vaults:
@@ -45,6 +47,9 @@ def select_vaults(all_vaults_data):
 
     if len(selected_vaults) < len(vaults_allocation):
         for vault in all_vaults:
+            vault_id = vault["id"]
+            if vault_id in whitelisted_ids or vault_id in fixed_ids:
+                continue
             if float(vault["dynamicData"]["remainingHours"]) > min_remaining_hours:
                 selected_vaults.append({
                     "id": vault["id"],
