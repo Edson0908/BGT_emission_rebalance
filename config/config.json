@@ -56,6 +56,10 @@
     {
       "id": "0xc196d595dece185ea39f8e1c3ce07a274ac31985",
       "name": "Avalon Labs - USDa | sUSDa"
+    },
+    {
+      "id": "0x9a5620309c20b8beca1d59c6def1e73ac6cba45d",
+      "name": "Solv - SolvBTC.BERA"
     }
   ],
   "contract": {
